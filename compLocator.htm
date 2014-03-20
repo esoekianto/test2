@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=9">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Composite Locator test</title>
+    <link rel="stylesheet" href="http://js.arcgis.com/3.8/js/esri/css/esri.css">
+    <style>
+      html, body, #map {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #search {
+        display: block;
+        position: absolute;
+        z-index: 3;
+        top: 20px;
+        left: 75px;
+      }
+     
+    </style>
+	<!--  change the JSAPI version by commenting out one or the other --?
+    <!--<script src="http://js.arcgis.com/3.8/"></script> 
+	<link rel="stylesheet" href="http://js.arcgis.com/3.8/js/esri/css/esri.css"> -->
+	
+	<script src="http://serverapi.arcgisonline.com/jsapi/arcgis/3.3/"></script>
+	<link rel="http://serverapi.arcgisonline.com/jsapi/arcgis/3.3/js/esri/css/esri.css" />
+	
+	
+	<script type="text/javascript">
+        var dojoConfig  = {parseOnLoad: true};
+		 dojo.ready(init);
+    </script>
+    <script>
+	
+      dojo.require("esri.map");
+	  dojo.require("esri.dijit.Geocoder");
+	  var geocoder;
+	  var map;
+	  function init() {
+        // create a map and instance of the geocoder widget here
+		var startExtent = new esri.geometry.Extent(-13643283.3971319, 5968413.370332831, -13500499.028295135, 6074966.587762407, new esri.SpatialReference({wkid:102100}));
+		
+        var map = new esri.Map("map", { 
+		  extent: startExtent,
+          slider: true,
+		  logo: false
+        });
+		
+		var basemap;
+	    var locator;
+        var tiledGenericBaseURL = "http://gismaps.kingcounty.gov/ArcGIS/rest/services/BaseMaps/KingCo_GenericBase/MapServer";
+	    var locatorURL = "http://kcgiscragsdev.dnrp.kingcounty.lcl/arcgis/rest/services/Address/Composite_locator/GeocodeServer";
+		var addresPointsURL = "http://gismaps.kingcounty.gov/ArcGIS/rest/services/Address/KingCo_AddressPoints/MapServer";
+		
+		basemap = new esri.layers.ArcGISTiledMapServiceLayer("http://gismaps.kingcounty.gov/ArcGIS/rest/services/BaseMaps/KingCo_GenericBase/MapServer", {id:"basemap"});
+        map.addLayer(basemap);
+		
+		var addressPoints = new esri.layers.ArcGISDynamicMapServiceLayer(addresPointsURL, { id: "Addresses" });
+		map.addLayer(addressPoints);
+		
+		var geocoders = [{  
+			url: locatorURL,  
+			name: "King County Geocoder"
+		}];
+		geocoder = new esri.dijit.Geocoder({          
+			   map: map,          
+			   autoComplete: true, 
+			   showResults: true,
+			   maxLocations: 12,
+			   autoNavigate: true,
+			   zoomScale: 15,
+			   geocoders: geocoders,  
+			   arcgisGeocoder: false			   
+			   },"search");        
+		geocoder.startup();
+        geocoder.on("select", showLocation);
+	}
+        function showLocation(evt) {
+          map.graphics.clear();
+          var point = evt.result.feature.geometry;
+          var symbol = new SimpleMarkerSymbol().setStyle(
+            SimpleMarkerSymbol.STYLE_SQUARE).setColor(
+            new Color([255,0,0,0.5])
+          );
+          var graphic = new Graphic(point, symbol);
+          map.graphics.add(graphic);
+
+          map.infoWindow.setTitle("Search Result");
+          map.infoWindow.setContent(evt.result.name);
+          map.infoWindow.show(evt.result.feature.geometry);
+
+        };
+    </script>
+		<script type="text/javascript">
+        var dojoConfig  = {parseOnLoad: true};
+		 dojo.ready(init);
+    </script>
+  </head>
+  <body class="soria">
+    <div id="search"></div>
+    <div id="map"></div>            
+  </body> 
+</html>
